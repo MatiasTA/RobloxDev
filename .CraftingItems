@@ -1,0 +1,52 @@
+local pot = script.Parent
+local recipes = -- Recipies
+--[[
+    Each recipe would be structured like so:
+    {IngredientOne = 1, IngredientTwo = 1}
+           ^         ^
+      Ingredient  Quantity
+
+    Recipe data can be structured like this:
+    {
+        ItemOne = {IngredientOne = 1, IngredientTwo = 2}
+        ItemTwo = {IngredientOne = 2, IngredientThree = 4}
+    }
+]]
+
+local potItems = {} -- Table of things stored in a pot
+
+local function CheckRecipe() -- Compare each recipe to each item in the pot to see if any of them matches
+    for recipeName, recipe in pairs(recipes) do -- Looping through valid recipes
+        local canCraft = true -- This value will determine if you can craft the item
+        for ingredient, quantity in pairs(recipe) do
+            if potItems[ingredient] ~= quantity then
+                canCraft = false -- Oh no! The ingredients aren't quite right!
+                break -- Ending this loop to continue on to the next recipe
+            end
+        end
+        if canCraft then -- Checking if the items in the pot has passed all checks
+            return recipeName
+        end
+    end
+end
+
+pot.ItemRecieved:Connect(function(item) -- Not an actual function, but you get the idea
+    if potItems[item] then -- Checking if the item exists yet
+        potItems[item] += 1 -- Adds one
+    else
+        potItems[item] = 1 --  Creates the item key and index
+    end
+    CheckRecipe() -- Run a check
+end)
+
+pot.ItemRemoved:Connect(function(item) -- Not an actual method, but you get the idea
+    potItems[item] -= 1 -- Removing one of this item from the recipe
+    if potItems[item] == 0 then
+        potItems[item] = nil
+        --[[
+            Setting it to nil. This will prevent any overlaps in recipes (i.e, some
+            recipes would have the same ingredients but with 1 difference)
+        --]]
+    end
+    CheckRecipe() -- Run a check
+end)
